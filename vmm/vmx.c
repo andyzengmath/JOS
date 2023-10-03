@@ -61,7 +61,8 @@ bool vmx_sel_resume(int num) {
 bool vmx_check_support() {
 	uint32_t eax, ebx, ecx, edx;
     cpuid( 1, &eax, &ebx, &ecx, &edx );
-    if (BIT(ecx，5)) {
+    const uint32_t VMX_EXTENSION_MASK = 1 << 5;
+    if (ecx & VMX_EXTENSION_MASK) {
         return true;
     }
     cprintf("[VMM] VMX extension not supported.\n");
