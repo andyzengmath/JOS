@@ -60,11 +60,12 @@ bool vmx_sel_resume(int num) {
  */
 bool vmx_check_support() {
 	uint32_t eax, ebx, ecx, edx;
-	cpuid( 0, &eax, &ebx, &ecx, &edx );
-	/* Your code here */
-    panic("vmx_check_support not implemented\n");
-	cprintf("[VMM] VMX extension not supported.\n");
-	return false;
+    cpuid( 1, &eax, &ebx, &ecx, &edx );
+    if (ecx & BIT(5)) {
+        return true;
+    }
+    cprintf("[VMM] VMX extension not supported.\n");
+    return false;
 }
 
 /* This function reads the VMX-specific MSRs
@@ -82,9 +83,18 @@ bool vmx_check_support() {
  */
 bool vmx_check_ept() {
 	/* Your code here */
-    panic("vmx_check_ept not implemented\n");
-	cprintf("[VMM] EPT extension not supported.\n");
-	return false;
+    uint64_t msr_value;
+    msr_value = read_msr(IA32_VMX_PROCBASED_CTLS);
+    if (!(msr_value & (1 << 31))) {
+        cprintf("[VMM] Secondary VMX controls not enabled.\n");
+        return false;
+    }
+    msr_value = read_msr(IA32_VMX_PROCBASED_CTLS2);
+    if (!(msr_value & (1 << 1))) {
+        cprintf("[VMM] EPT not supported.\n");
+        return false;
+    }
+    return true;
 }
 
 /* Checks if curr_val is compatible with fixed0 and fixed1
