@@ -20,7 +20,37 @@ static int
 map_in_guest( envid_t guest, uintptr_t gpa, size_t memsz, 
 	      int fd, size_t filesz, off_t fileoffset ) {
 	/* Your code here */
-	return -E_NO_SYS;
+	char *buf;  
+    int r;  
+    size_t offset = 0;  
+  
+    // Allocate a buffer to hold the file contents  
+    if ((buf = malloc(PGSIZE)) == NULL)  
+        return -E_NO_MEM;  
+  
+    // Loop over each page in the region  
+    while (memsz > 0) {  
+        // Read a page's worth of the file into buf  
+        int amount = (filesz < PGSIZE) ? filesz : PGSIZE;  
+        if ((r = read(fd, buf, amount)) < 0)  
+            return r;  
+  
+        // Map the page into the guest's memory space  
+        if ((r = sys_ept_map(0, buf, guest, (void *)(gpa + offset), PTE_P | PTE_W | PTE_U)) < 0)  
+            return r;  
+  
+        // Adjust for next iteration  
+        memsz -= PGSIZE;  
+        filesz -= amount;  
+        offset += PGSIZE;  
+  
+        // Zero out any part of the page that wasn't part of the file  
+        if (amount < PGSIZE)  
+            memset(buf + amount, 0, PGSIZE - amount);  
+    }  
+  
+    free(buf);  
+    return 0;  
 } 
 
 // Read the ELF headers of kernel file specified by fname,
@@ -32,7 +62,39 @@ map_in_guest( envid_t guest, uintptr_t gpa, size_t memsz,
 static int
 copy_guest_kern_gpa( envid_t guest, char* fname ) {
 	/* Your code here */
-	return -E_NO_SYS;
+	int fd, r;  
+    struct Elf *elf;  
+    struct Proghdr *ph, *eph;  
+    void *va;  
+  
+    if ((fd = open(fname, O_RDONLY)) < 0)  
+        return -E_NO_SYS;  
+  
+    elf = malloc(PGSIZE);  
+    if (elf == NULL)  
+        return -E_NO_MEM;  
+  
+    // Read the ELF header  
+    if (read(fd, elf, PGSIZE) != PGSIZE || elf->e_magic != ELF_MAGIC) {  
+        free(elf);  
+        return -E_INVAL;  
+    }  
+  
+    // Load each program segment  
+    ph = (struct Proghdr *)((uint8_t *)elf + elf->e_phoff);  
+    eph = ph + elf->e_phnum;  
+    for (; ph < eph; ph++) {  
+        if (ph->p_type != ELF_PROG_LOAD)  
+            continue;  
+  
+        if ((r = map_in_guest(guest, ph->p_pa, ph->p_memsz, fd, ph->p_filesz, ph->p_offset)) < 0) {  
+            free(elf);  
+            return r;  
+        }  
+    }  
+  
+    free(elf);  
+    return 0;  
 }
 
 void
