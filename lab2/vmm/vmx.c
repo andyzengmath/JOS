@@ -486,99 +486,68 @@ void vmexit() {
 // CHANGED FOR LAB 0
 void asm_vmrun(struct Trapframe *tf) {
 
-	/* cprintf("VMRUN\n"); */
-	// NOTE: Since we re-use Trapframe structure, tf.tf_err contains the value
-	// of cr2 of the guest.
-
-	// Hint, Lab 0: tf_ds should have the number of runs, prior to entering the assembly!!
-	// e (the env we got the trapframe from) and curenv are the same at this point
-	tf->tf_ds = curenv->env_runs;
-	tf->tf_es = 0;
-	unlock_kernel();
-	asm(
-		"push %%rdx; push %%rbp;"
-		"push %%rcx \n\t" /* placeholder for guest rcx */
-		"push %%rcx \n\t"
-		/* Set the VMCS rsp to the current top of the frame. */
-		/* Your code here */
-		"1: \n\t"
-		/* Reload cr2 if changed */
-		"mov %c[cr2](%0), %%rax \n\t"
-		"mov %%cr2, %%rdx \n\t"
-		"cmp %%rax, %%rdx \n\t"
-		"je 2f \n\t"
-		"mov %%rax, %%cr2 \n\t"
-		"2: \n\t"
-		/* Check if vmlaunch of vmresume is needed, set the condition code
-		 * appropriately for use below.
-		 *
-		 * Hint: We store the number of times the VM has run in tf->tf_ds
-		 *
-		 * Hint: In this function,
-		 *       you can use register offset addressing mode, such as '%c[rax](%0)'
-		 *       to simplify the pointer arithmetic.
-		 */
-		/* Your code here */
-		/* Load guest general purpose registers from the trap frame.  Don't clobber flags.
-		 *
-		 */
-		/* Your code here */
-		/* GUEST MODE */
-		/* Your code here:
-		 *
-		 * Test the condition code from rflags
-		 * to see if you need to execute a vmlaunch
-		 * instruction, or just a vmresume.
-		 *
-		 * Note: be careful in loading the guest registers
-		 * that you don't do any compareison that would clobber the condition code, set
-		 * above.
-		 */
-		".Lvmx_return: "
-
-		/* POST VM EXIT... */
-		"mov %0, %c[wordsize](%%rsp) \n\t"
-		"pop %0 \n\t"
-		/* Save general purpose guest registers and cr2 back to the trapframe.
-		 *
-		 * Be careful that the number of pushes (above) and pops are symmetrical.
-		 */
-		/* Your code here */
-		"pop  %%rbp; pop  %%rdx \n\t"
-
-		"setbe %c[fail](%0) \n\t"
-		: : "c"(tf), "d"((unsigned long)VMCS_HOST_RSP),
-		  [launched]"i"(offsetof(struct Trapframe, tf_ds)),
-		  [fail]"i"(offsetof(struct Trapframe, tf_es)),
-		  [rax]"i"(offsetof(struct Trapframe, tf_regs.reg_rax)),
-		  [rbx]"i"(offsetof(struct Trapframe, tf_regs.reg_rbx)),
-		  [rcx]"i"(offsetof(struct Trapframe, tf_regs.reg_rcx)),
-		  [rdx]"i"(offsetof(struct Trapframe, tf_regs.reg_rdx)),
-		  [rsi]"i"(offsetof(struct Trapframe, tf_regs.reg_rsi)),
-		  [rdi]"i"(offsetof(struct Trapframe, tf_regs.reg_rdi)),
-		  [rbp]"i"(offsetof(struct Trapframe, tf_regs.reg_rbp)),
-		  [r8]"i"(offsetof(struct Trapframe, tf_regs.reg_r8)),
-		  [r9]"i"(offsetof(struct Trapframe, tf_regs.reg_r9)),
-		  [r10]"i"(offsetof(struct Trapframe, tf_regs.reg_r10)),
-		  [r11]"i"(offsetof(struct Trapframe, tf_regs.reg_r11)),
-		  [r12]"i"(offsetof(struct Trapframe, tf_regs.reg_r12)),
-		  [r13]"i"(offsetof(struct Trapframe, tf_regs.reg_r13)),
-		  [r14]"i"(offsetof(struct Trapframe, tf_regs.reg_r14)),
-		  [r15]"i"(offsetof(struct Trapframe, tf_regs.reg_r15)),
-		  [cr2]"i"(offsetof(struct Trapframe, tf_err)),
-		  [wordsize]"i"(sizeof(uint64_t))
-                : "cc", "memory"
-		  , "rax", "rbx", "rdi", "rsi"
-		  , "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"
-		);
-	lock_kernel();
-	if(tf->tf_es) {
-		cprintf("Error during VMLAUNCH/VMRESUME\n");
-	} else {
-		curenv->env_tf.tf_rsp = vmcs_read64(VMCS_GUEST_RSP);
-		curenv->env_tf.tf_rip = vmcs_read64(VMCS_GUEST_RIP);
-		vmexit();
-	}
+	/* cprintf("VMRUN\n"); */  
+    tf->tf_ds = curenv->env_runs;  
+    tf->tf_es = 0;  
+    unlock_kernel();  
+    asm(  
+        "push %%rdx; push %%rbp;"  
+        "push %%rcx \n\t" /* placeholder for guest rcx */  
+        "push %%rcx \n\t"  
+        "mov %1, %%rax \n\t" /* Set the VMCS rsp to the current top of the frame. */  
+        "vmwrite %%rax, %%rsp \n\t"  
+        "1: \n\t"  
+        "mov %c[cr2](%0), %%rax \n\t"  
+        "mov %%cr2, %%rdx \n\t"  
+        "cmp %%rax, %%rdx \n\t"  
+        "je 2f \n\t"  
+        "mov %%rax, %%cr2 \n\t"  
+        "2: \n\t"  
+        "cmp $1, %c[launched](%0) \n\t" /* Check if vmlaunch of vmresume is needed */  
+        "jne .Lresume \n\t"  
+        "vmlaunch \n\t"  
+        "jmp .Lvmx_return \n\t"  
+        ".Lresume: \n\t"  
+        "vmresume \n\t"  
+        ".Lvmx_return: "  
+        "mov %0, %c[wordsize](%%rsp) \n\t"  
+        "pop %0 \n\t"  
+        /* Save general purpose guest registers and cr2 back to the trapframe. */  
+        /* Your code here */  
+        "pop  %%rbp; pop  %%rdx \n\t"  
+        "setbe %c[fail](%0) \n\t"  
+        : : "c"(tf), "d"((unsigned long)VMCS_HOST_RSP),  
+          [launched]"i"(offsetof(struct Trapframe, tf_ds)),  
+          [fail]"i"(offsetof(struct Trapframe, tf_es)),  
+          [rax]"i"(offsetof(struct Trapframe, tf_regs.reg_rax)),  
+          [rbx]"i"(offsetof(struct Trapframe, tf_regs.reg_rbx)),  
+          [rcx]"i"(offsetof(struct Trapframe, tf_regs.reg_rcx)),  
+          [rdx]"i"(offsetof(struct Trapframe, tf_regs.reg_rdx)),  
+          [rsi]"i"(offsetof(struct Trapframe, tf_regs.reg_rsi)),  
+          [rdi]"i"(offsetof(struct Trapframe, tf_regs.reg_rdi)),  
+          [rbp]"i"(offsetof(struct Trapframe, tf_regs.reg_rbp)),  
+          [r8]"i"(offsetof(struct Trapframe, tf_regs.reg_r8)),  
+          [r9]"i"(offsetof(struct Trapframe, tf_regs.reg_r9)),  
+          [r10]"i"(offsetof(struct Trapframe, tf_regs.reg_r10)),  
+          [r11]"i"(offsetof(struct Trapframe, tf_regs.reg_r11)),  
+          [r12]"i"(offsetof(struct Trapframe, tf_regs.reg_r12)),  
+          [r13]"i"(offsetof(struct Trapframe, tf_regs.reg_r13)),  
+          [r14]"i"(offsetof(struct Trapframe, tf_regs.reg_r14)),  
+          [r15]"i"(offsetof(struct Trapframe, tf_regs.reg_r15)),  
+          [cr2]"i"(offsetof(struct Trapframe, tf_err)),  
+          [wordsize]"i"(sizeof(uint64_t))  
+        : "cc", "memory"  
+          , "rax", "rbx", "rdi", "rsi"
+		  , "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"  
+		);  
+	lock_kernel();  
+	if(tf->tf_es) {  
+		cprintf("Error during VMLAUNCH/VMRESUME\n");  
+	} else {  
+		curenv->env_tf.tf_rsp = vmcs_read64(VMCS_GUEST_RSP);  
+		curenv->env_tf.tf_rip = vmcs_read64(VMCS_GUEST_RIP);  
+		vmexit();  
+	}  
 }
 
 void
