@@ -454,7 +454,31 @@ sys_ept_map(envid_t srcenvid, void *srcva,
 	    envid_t guest, void* guest_pa, int perm)
 {
     /* Your code here */
-    return 0;
+    struct Env *srcenv, *guestenv; 
+	pte_t *pte; 
+	int r; 
+
+	if (srcenvid2env(srcenvid, &srcenv, 1) < 0 || 
+	srcenvid2env(guest, &guestenv, 1) < 0) 
+		return -E_BAD_ENV; 
+
+	if ((uintptr_t)srcva >= UTOP || (uintptr_t)srcva % PGSIZE != 0 || 
+	(uintptr_t)guest_pa >= guestenv->env_phys_sz || (uintptr_t)guest_pa % PGSIZE != 0) 
+		return -E_INVAL; 
+
+	if (!(perm & PTE_P)) 
+		return -E_INVAL; 
+
+	if ((r = page_lookup(srcenv->env_pgdir, srcva, &pte)) < 0) 
+		return r; 
+
+	if ((perm & PTE_W) && !(*pte & PTE_W)) 
+		return -E_INVAL; 
+
+	if ((r = ept_map_hva2gpa(guestenv->env_pml4e, guest_pa, PTE_ADDR(*pte), perm, 0)) < 0) 
+		return r; 
+
+	return 0; 
 }
 
 static envid_t

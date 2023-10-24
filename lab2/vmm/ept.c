@@ -49,7 +49,34 @@ static inline int epte_present(epte_t epte)
 static int ept_lookup_gpa(epte_t* eptrt, void *gpa,
 			  int create, epte_t **epte_out) {
     /* Your code here */
-    return 0;
+    epte_t *epte;  
+    uintptr_t gpa_idx;  
+      
+    if (!eptrt)  
+        return -E_INVAL;  
+  
+    for (int level = EPT_LEVELS - 1; level > 0; level--) {  
+        gpa_idx = EPT_IDX(level, (uintptr_t)gpa);  
+        epte = &eptrt[gpa_idx];  
+  
+        if (!(*epte & EPT_P)) {  
+            if (!create)  
+                return -E_NO_ENT;  
+  
+            struct PageInfo *pp = page_alloc(ALLOC_ZERO);  
+            if (!pp)  
+                return -E_NO_MEM;  
+  
+            *epte = page2pa(pp) | __EPTE_FULL;  
+        }  
+  
+        eptrt = KADDR(EPT_ADDR(*epte));  
+    }  
+      
+    if (epte_out)  
+        *epte_out = &eptrt[EPT_IDX(0, (uintptr_t)gpa)];  
+  
+    return 0;  
 }
 
 void ept_gpa2hva(epte_t* eptrt, void *gpa, void **hva) {
@@ -126,7 +153,19 @@ int ept_page_insert(epte_t* eptrt, struct PageInfo* pp, void* gpa, int perm) {
 int ept_map_hva2gpa(epte_t* eptrt, void* hva, void* gpa, int perm,
         int overwrite) {
     /* Your code here */
-    return 0;
+    epte_t *epte;  
+    int r;  
+  
+    r = ept_lookup_gpa(eptrt, gpa, 1, &epte);  
+    if (r < 0)  
+        return r;  
+  
+    if ((*epte & EPT_P) && !overwrite)  
+        return -E_INVAL;  
+  
+    *epte = PADDR(hva) | perm | EPTE_TYPE_WB | __EPTE_IPAT;  
+  
+    return 0; 
 }
 
 int ept_alloc_static(epte_t *eptrt, struct VmxGuestInfo *ginfo) {
