@@ -1,3 +1,21 @@
++ ld obj/user/forktree
++ cc[USER] user/primes.c
++ ld obj/user/primes
++ cc[USER] user/vmmanager.c
++ ld obj/user/vmmanager
++ cc[USER] user/init.c
++ ld obj/user/init
++ mk obj/fs/clean-fs.img
++ cp obj/fs/clean-fs.img obj/fs/fs.img
+***
+*** Now run 'gdb'.
+***
+WARNING: Image format was not specified for 'obj/kern/kernel.img' and probing guessed raw.
+         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.
+         Specify the 'raw' format explicitly to remove the restrictions.
+WARNING: Image format was not specified for 'obj/fs/fs.img' and probing guessed raw.
+         Automatically detecting the format is dangerous for raw images, write operations on block 0 will be restricted.
+         Specify the 'raw' format explicitly to remove the restrictions.
 6828 decimal is 15254 octal!
 
 e820 MEMORY MAP
@@ -22,40 +40,27 @@ PCI: 00:01.3: 8086:7113: class: 80000b0800000006.80000b0800000080 (Bridge device
 PCI: 00:02.0: 1234:1111: class: 8000100800000003.8000100800000000 (Display controller) irq: 549755813888
 PCI: 00:03.0: 8086:100e: class: 8000180800000002.8000180800000000 (Network controller) irq: 549755813899
 PCI function 00:03.0 (8086:100e) enabled
-Processor supports VMX
-Processor supports EPT
+EPT map to non-guest env failed as expected (4294967293).
 VCPUNUM allocated: 0
-FS is running
-FS can do I/O
-Device 1 presence: 1
-block cache is good
-superblock is good
-bitmap is good
-TRAP frame at 0x8003fffd80 from CPU 0
-  r15  0x00000000
-  r14  0x00000200
-  r13  0x00000000
-  r12  0x00000200
-  r11  0x00000000
-  r10  0x00000000
-  r9  0x00000007
-  r8  0x00000007
-  rdi  0x00001002
-  rsi  0x8003fffe70
-  rbp  0x8003fffea0
-  rbx  0x00001002
-  rdx  0x80048442d0
-  rcx  0x00000000
-  rax  0x00000001
-  es   0x----0010
-  ds   0x----0010
-  trap 0x0000000e Page Fault
-  cr2  0x00000001
-  err  0x00000000 [kernel, read, not-present]
-  rip  0x800420ed8b
-  cs   0x----0008
-  flag 0x00010002
-kernel panic on CPU 0 at ../kern/trap.c:478: page fault
+EPT map from above UTOP area failed as expected (4294967293).
+EPT map from unaligned srcva failed as expected (4294967293).
+EPT map to out-of-boundary area failed as expected (4294967293).
+EPT map to unaligned guest_pa failed as expected (4294967293).
+EPT map with empty perm parameter failed as expected (4294967293).
+EPT map with write perm parameter failed as expected (4294967293).
+sys_ept_map finished normally.
+pp_ref incremented correctly
+sys_ept_map finished normally.
+sys_ept_map handled pp_ref correctly.
+EPT lookup with a null eptrt failed as expected
+EPT mapping address looks good: 8b7000 vs 8b7000.
+map_hva2gpa handle not overwriting correctly
+map_hva2gpa success on mapping a page
+map_hva2gpa success on perm check
+EPT immediate mapping check passed
+Cheers! sys_ept_map seems to work correctly
+kernel panic on CPU 0 at ../vmm/ept.c:372: Cheers! sys_ept_map seems to work correctly
+
 Welcome to the JOS kernel monitor!
 Type 'help' for a list of commands.
-qemu-system-x86_64: terminating on signal 15 from pid 8627
+qemu-system-x86_64: terminating on signal 15 from pid 3383

@@ -12,10 +12,10 @@ vmm/guest/obj/fs/fsformat: fs/fsformat.c /usr/include/stdc-predef.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl.h \
  /usr/include/x86_64-linux-gnu/bits/fcntl-linux.h /usr/include/time.h \
  /usr/include/x86_64-linux-gnu/bits/stat.h /usr/include/inttypes.h \
- /usr/lib/gcc/x86_64-linux-gnu/5/include/stdint.h /usr/include/stdint.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdint.h /usr/include/stdint.h \
  /usr/include/x86_64-linux-gnu/bits/wchar.h \
- /usr/lib/gcc/x86_64-linux-gnu/5/include/stdarg.h /usr/include/stdio.h \
- /usr/lib/gcc/x86_64-linux-gnu/5/include/stddef.h /usr/include/libio.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stdarg.h /usr/include/stdio.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.8/include/stddef.h /usr/include/libio.h \
  /usr/include/_G_config.h /usr/include/wchar.h \
  /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
  /usr/include/x86_64-linux-gnu/bits/sys_errlist.h /usr/include/stdlib.h \

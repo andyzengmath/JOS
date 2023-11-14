@@ -252,7 +252,61 @@ handle_vmcall(struct Trapframe *tf, struct VmxGuestInfo *gInfo, uint64_t *eptrt)
 		// Copy the mbinfo and memory_map_t (segment descriptions) into the guest page, and return
 		//   a pointer to this region in rbx (as a guest physical address).
 		/* Your code here */
+		// Initialize the memory_map_t objects  
+		// Initialize the memory_map_t objects  
+		memory_map_t lomap, iomap, himap;  
+	
+		// Set the memory_map_t objects with appropriate values  
+		lomap.size = 0x9fc00;  
+		lomap.base_addr_low = 0x0;  
+		lomap.base_addr_high = 0x0;  
+		lomap.length_low = 0x9fc00;  
+		lomap.length_high = 0x0;  
+		lomap.type = MB_TYPE_USABLE; 
+	
+		iomap.size = 0x1000;  
+		iomap.base_addr_low = 0xa0000;  
+		iomap.base_addr_high = 0x0;  
+		iomap.length_low = 0x60000;  
+		iomap.length_high = 0x0;  
+		iomap.type = MB_TYPE_RESERVED; 
+	
+		himap.size = (maxpa() - KERNBASE - 0x100000); 
+		himap.base_addr_low = 0x100000;  
+		himap.base_addr_high = 0x0;  
+		himap.length_low = himap.size;  
+		himap.length_high = 0x0;  
+		himap.type = MB_TYPE_USABLE; 
+
+		// Initialize the mbinfo struct  
+		mbinfo.flags = MB_FLAG_MMAP; // memory map is provided  
+		mbinfo.mmap_length = 3 * sizeof(memory_map_t); // we have 3 memory_map_t objects  
+		mbinfo.mmap_addr = multiboot_map_addr + sizeof(mbinfo);  
+	
+		// Find the kernel virtual address of the guest page or allocate one and map it at multiboot_map_addr  
+		struct PageInfo *gpa_pg;  
+		r = page_alloc(&gpa_pg); // Replace this with the correct function call for your environment  
+		if (r < 0) {  
+			panic("handle_vmcall: could not allocate page for multiboot map");  
+		}  
+		r = page_insert(curenv->env_pgdir, gpa_pg, multiboot_map_addr, PTE_P | PTE_W | PTE_U); // Replace env_pgdir with the correct field for your environment  
+		if (r < 0) {  
+			panic("handle_vmcall: could not insert page for multiboot map");  
+		}  
+	
+		// Copy the mbinfo and memory_map_t (segment descriptions) into the guest page  
+		void *hva_pg = page2kva(gpa_pg);  
+		memcpy(hva_pg, &mbinfo, sizeof(mbinfo));  
+		memcpy(hva_pg + sizeof(mbinfo), &lomap, sizeof(lomap));  
+		memcpy(hva_pg + sizeof(mbinfo) + sizeof(lomap), &iomap, sizeof(iomap));  
+		memcpy(hva_pg + sizeof(mbinfo) + sizeof(lomap) + sizeof(iomap), &himap, sizeof(himap));  
+	
+		// Set the guest's rbx to the guest physical address of the mbinfo region  
+		tf->tf_regs.reg_rbx = multiboot_map_addr;  
+	
+		handled = true;  
 		break;
+		
 	case VMX_VMCALL_IPCSEND:
         /* Hint: */
 		// Issue the sys_ipc_send call to the host.
@@ -294,6 +348,7 @@ handle_vmcall(struct Trapframe *tf, struct VmxGuestInfo *gInfo, uint64_t *eptrt)
 		 * Hint: The solution does not hard-code the length of the vmcall instruction.
 		 */
 		/* Your code here */
+		tf->tf_rip += vmcs_read32(VMCS_32BIT_VMEXIT_INSTRUCTION_LENGTH);
 	}
 	return handled;
 }

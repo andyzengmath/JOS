@@ -1261,13 +1261,13 @@ xchg(volatile uint32_t *addr,uint32_t newval){
   80042001a2:	48 83 ec 10          	sub    $0x10,%rsp
   80042001a6:	48 ba 10 e0 6d 04 80 	movabs $0x80046de010,%rdx
   80042001ad:	00 00 00 
-  80042001b0:	48 b8 a0 be 49 04 80 	movabs $0x800449bea0,%rax
+  80042001b0:	48 b8 00 bd 49 04 80 	movabs $0x800449bd00,%rax
   80042001b7:	00 00 00 
   80042001ba:	48 29 c2             	sub    %rax,%rdx
   80042001bd:	48 89 d0             	mov    %rdx,%rax
   80042001c0:	48 89 c2             	mov    %rax,%rdx
   80042001c3:	be 00 00 00 00       	mov    $0x0,%esi
-  80042001c8:	48 bf a0 be 49 04 80 	movabs $0x800449bea0,%rdi
+  80042001c8:	48 bf 00 bd 49 04 80 	movabs $0x800449bd00,%rdi
   80042001cf:	00 00 00 
   80042001d2:	48 b8 d0 ff 20 04 80 	movabs $0x800420ffd0,%rax
   80042001d9:	00 00 00 
@@ -1328,13 +1328,13 @@ xchg(volatile uint32_t *addr,uint32_t newval){
   80042002c4:	00 00 00 
   80042002c7:	ff d0                	callq  *%rax
   80042002c9:	be 01 00 00 00       	mov    $0x1,%esi
-  80042002ce:	48 bf 20 59 2b 04 80 	movabs $0x80042b5920,%rdi
+  80042002ce:	48 bf d8 58 2b 04 80 	movabs $0x80042b58d8,%rdi
   80042002d5:	00 00 00 
   80042002d8:	48 b8 36 89 20 04 80 	movabs $0x8004208936,%rax
   80042002df:	00 00 00 
   80042002e2:	ff d0                	callq  *%rax
   80042002e4:	be 00 00 00 00       	mov    $0x0,%esi
-  80042002e9:	48 bf 40 d8 29 04 80 	movabs $0x800429d840,%rdi
+  80042002e9:	48 bf 00 d8 29 04 80 	movabs $0x800429d800,%rdi
   80042002f0:	00 00 00 
   80042002f3:	48 b8 36 89 20 04 80 	movabs $0x8004208936,%rax
   80042002fa:	00 00 00 
@@ -2721,9 +2721,9 @@ outb(int port, uint8_t data)
   80042014c8:	48 b9 82 95 20 04 80 	movabs $0x8004209582,%rcx
   80042014cf:	00 00 00 
   80042014d2:	ff d1                	callq  *%rcx
-  80042014d4:	48 ba a0 be 49 00 00 	movabs $0x49bea0,%rdx
+  80042014d4:	48 ba 00 bd 49 00 00 	movabs $0x49bd00,%rdx
   80042014db:	00 00 00 
-  80042014de:	48 be a0 be 49 04 80 	movabs $0x800449bea0,%rsi
+  80042014de:	48 be 00 bd 49 04 80 	movabs $0x800449bd00,%rsi
   80042014e5:	00 00 00 
   80042014e8:	48 bf 40 8b 21 04 80 	movabs $0x8004218b40,%rdi
   80042014ef:	00 00 00 
@@ -15523,7 +15523,7 @@ xchg(volatile uint32_t *addr,uint32_t newval){
   800420d584:	48 89 c1             	mov    %rax,%rcx
   800420d587:	48 ba b0 a2 21 04 80 	movabs $0x800421a2b0,%rdx
   800420d58e:	00 00 00 
-  800420d591:	be 5a 00 00 00       	mov    $0x5a,%esi
+  800420d591:	be 76 00 00 00       	mov    $0x76,%esi
   800420d596:	48 bf d4 a2 21 04 80 	movabs $0x800421a2d4,%rdi
   800420d59d:	00 00 00 
   800420d5a0:	b8 00 00 00 00       	mov    $0x0,%eax
